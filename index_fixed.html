@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"><title>TITAN INFINITY</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- مكتبات التصدير -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600&family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* TITAN INFINITY THEME */
+:root{--c:#00f2fe; --r:#ff0055; --g:#00ff9d; --gold:#ffd700; --bg:#05070a; --p:#0b0e11; --br:#1f2228}
+body{background:var(--bg);color:#cfd8dc;font-family:'Cairo';margin:0;height:100vh;display:flex;overflow:hidden}
+
+/* Animations */
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+.sidebar{width:260px;background:var(--p);border-left:1px solid var(--br);display:flex;flex-direction:column}
+.brand{padding:20px;text-align:center;border-bottom:1px solid var(--br);background:linear-gradient(45deg,#000,#0a0a0a)}
+.brand h2{font-family:'Rajdhani';color:var(--c);margin:0;letter-spacing:1px}
+
+/* Advanced Export Bar */
+.dash-head{height:60px;background:#080a0c;border-bottom:1px solid var(--br);display:flex;align-items:center;padding:0 20px;justify-content:space-between}
+.btn-group{display:flex;gap:8px}
+.btn{background:transparent;border:1px solid #333;color:#888;padding:5px 12px;border-radius:4px;cursor:pointer;font-family:'Rajdhani';font-weight:bold;transition:0.3s}
+.btn:hover{border-color:var(--c);color:var(--c);background:#00f2fe10}
+.btn-pdf{color:var(--gold);border-color:var(--gold)}
+
+/* Data View */
+.grid-container{flex:1;display:grid;grid-template-columns:1fr 400px;overflow:hidden}
+.list-panel{overflow-y:auto;padding:10px}
+.file-card{background:var(--p);border:1px solid #1a1a1a;border-radius:5px;padding:10px;margin-bottom:6px;display:flex;justify-content:space-between;cursor:pointer;transition:0.2s}
+.file-card:hover{border-left:4px solid var(--c);background:#111}
+
+/* Detail Panel */
+.detail-panel{background:#000;border-right:1px solid var(--br);display:flex;flex-direction:column;padding:20px;overflow-y:auto}
+.ai-box{border:1px dashed var(--br);background:#0f0505;padding:15px;border-radius:8px;margin-top:15px;position:relative}
+.ai-label{color:var(--r);font-family:'Rajdhani';font-weight:bold;display:flex;gap:10px;align-items:center}
+.code-fix{background:#111;color:#d4d4d4;font-family:'Consolas';padding:10px;font-size:0.85em;border-radius:4px;margin-top:5px;white-space:pre-wrap;border-left:3px solid var(--r)}
+
+.tag{font-size:0.7em;padding:2px 6px;border-radius:3px;background:#1a1a1a;border:1px solid #333;color:#aaa}
+.risk-Critical{color:var(--r)}
+.comp-Clean{color:var(--g)} .comp-High{color:var(--gold)} .comp-Critical{color:var(--r)}
+
+/* Performance Metrics */
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:15px 0}
+.metric-card{background:var(--p);border:1px solid var(--br);border-radius:8px;padding:15px;text-align:center}
+.metric-value{font-size:1.8em;font-weight:bold;color:var(--c)}
+.metric-label{font-size:0.8em;color:#888;margin-top:5px}
+
+/* Advanced Charts */
+.chart-container{background:var(--p);border:1px solid var(--br);border-radius:8px;padding:15px;margin:10px 0;height:300px}
+.chart-title{color:var(--c);font-family:'Rajdhani';font-weight:bold;margin-bottom:10px}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .grid-container{grid-template-columns:1fr}
+    .sidebar{width:200px}
+    .btn-group{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+    <div class="brand">
+        <h2>TITAN INFINITY</h2>
+        <div style="font-size:0.6em;color:#555">DEV ARCHITECT V9.0 ULTIMATE</div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:10px" id="treeView"></div>
+    <div style="padding:15px"><canvas id="statChart"></canvas></div>
+</aside>
+
+<main style="flex:1;display:flex;flex-direction:column" id="captureArea">
+    <div class="dash-head">
+        <input type="text" id="search" placeholder="بحث فوري (Function, Risk, Module)..." style="background:#111;border:1px solid #333;padding:8px;color:#fff;width:250px;border-radius:4px">
+        
+        <!-- GENIUS EXPORT SUITE -->
+        <div class="btn-group" data-html2canvas-ignore="true">
+            <button class="btn" onclick="exportData('json')"><i class="fas fa-code"></i> JSON</button>
+            <button class="btn" onclick="exportData('csv')"><i class="fas fa-table"></i> CSV</button>
+            <button class="btn" onclick="exportData('md')"><i class="fas fa-file-alt"></i> MARKDOWN</button>
+            <button class="btn" onclick="exportData('xml')"><i class="fas fa-code"></i> XML</button>
+            <button class="btn" onclick="exportData('excel')"><i class="fas fa-file-excel"></i> EXCEL</button>
+            <button class="btn btn-pdf" onclick="generatePDF()"><i class="fas fa-file-pdf"></i> REPORT</button>
+            <button class="btn" onclick="generateAdvancedReport()" style="background: linear-gradient(45deg, #00f2fe, #ff0055); color: white;"><i class="fas fa-rocket"></i> ADVANCED</button>
+        </div>
+    </div>
+
+    <div class="grid-container">
+        <!-- List View -->
+        <div class="list-panel" id="fileList"></div>
+
+        <!-- Detail / Genius Panel -->
+        <div class="detail-panel" id="detailPanel">
+            <div style="text-align:center;color:#333;margin-top:50%">
+                <i class="fas fa-laptop-code" style="font-size:4em"></i><br><br>
+                SELECT A MODULE
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="data.js"></script>
+<script>
+let CURRENT_DATA = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+    if(typeof titanData === 'undefined') return;
+    CURRENT_DATA = titanData.Data;
+    
+    // Init Visuals
+    buildTree();
+    renderList(CURRENT_DATA);
+    
+    // Stats Chart
+    const stats = {logic:0, ui:0, sys:0};
+    CURRENT_DATA.forEach(f=>{ 
+        if(f.Layer && f.Layer.includes('Logic'))stats.logic++; 
+        else if(f.Layer && f.Layer.includes('Pre'))stats.ui++; 
+        else stats.sys++ 
+    });
+    new Chart(document.getElementById('statChart'), {
+        type: 'polarArea',
+        data: { 
+            labels:['Logic','UI','System'], 
+            datasets:[{
+                data:[stats.logic,stats.ui,stats.sys], 
+                backgroundColor:['#00f2fe','#ff00ff','#444'], 
+                borderWidth:0
+            }] 
+        },
+        options: {plugins:{legend:{display:false}}, scales:{r:{display:false}}}
+    });
+
+    // Search
+    document.getElementById('search').addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase();
+        renderList(CURRENT_DATA.filter(f => 
+            (f.Name && f.Name.toLowerCase().includes(q)) || 
+            (f.Layer && f.Layer.toLowerCase().includes(q)) ||
+            (f.Type && f.Type.toLowerCase().includes(q))
+        ));
+    });
+});
+
+function renderList(data) {
+    document.getElementById('fileList').innerHTML = data.slice(0,150).map(f => `
+        <div class="file-card" onclick="loadDetails(${f.ID})" style="border-right:3px solid ${f.Risk=='Stable'?'var(--g)':'var(--r)'}">
+            <div>
+                <b style="color:#e2e8f0">${f.Name}</b><br><small style="color:#555">${f.Path}</small>
+            </div>
+            <div style="text-align:right">
+                <span class="tag">${f.Layer || f.Type || 'Unknown'}</span>
+                <span class="tag comp-${f.Complexity || 'Medium'}">${f.Complexity || 'Medium'}</span>
+                <div style="color:${f.Score>80?'var(--g)':(f.Score<50?'var(--r)':'var(--gold)')};font-weight:bold">${f.Score || 0}%</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function loadDetails(id) {
+    const f = titanData.Data.find(x => x.ID === id);
+    if (!f) return;
+    
+    // تشخيص العبقرية (هل هناك مشكلة تحتاج حل)
+    let fixBlock = '';
+    if(f.FixTitle && f.FixTitle !== "None") {
+        fixBlock = `
+        <div class="ai-box">
+            <div class="ai-label"><i class="fas fa-bug"></i> DEV DIAGNOSIS DETECTED</div>
+            <p style="margin:5px 0;font-size:0.9em;color:#aaa">${f.FixTitle}</p>
+            <div class="code-fix">${f.FixSnippet || 'No fix available'}</div>
+        </div>`;
+    }
+
+    const tags = f.Tags ? f.Tags.split(' ').map(t => `<span class="tag" style="color:var(--c)">#${t}</span>`).join(' ') : '';
+
+    document.getElementById('detailPanel').innerHTML = `
+        <h2 style="color:var(--c);word-break:break-all;margin-bottom:5px">${f.Name}</h2>
+        <div style="margin-bottom:15px">${tags}</div>
+        
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value" style="color:${f.Score>80?'var(--g)':(f.Score<50?'var(--r)':'var(--gold)')}">${f.Score || 0}</div>
+                <div class="metric-label">QUALITY</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">${f.Lines || 0}</div>
+                <div class="metric-label">LINES</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">${f.Functions || 0}</div>
+                <div class="metric-label">FUNCTIONS</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">${f.Todos || 0}</div>
+                <div class="metric-label">TODOS</div>
+            </div>
+        </div>
+
+        ${fixBlock}
+
+        <h4 style="margin-top:20px;color:#666">SOURCE PREVIEW</h4>
+        <div style="background:#080808;padding:10px;font-family:'Consolas';font-size:0.8em;overflow:auto;max-height:350px;border:1px solid #222;color:#999">
+            ${f.Preview || 'No preview available'}
+        </div>
+    `;
+}
+
+// ---------------- EXPORT MODULES (GENIUS SUITE) ----------------
+window.exportData = function(type) {
+    const fn = `TITAN_Report_${new Date().toISOString().slice(0,10)}`;
+    if(type === 'json') {
+        const b = new Blob([JSON.stringify(CURRENT_DATA, null, 2)], {type: "application/json"});
+        saveAs(b, fn+'.json');
+    }
+    else if(type === 'csv') {
+        const head = "Name,Path,Layer,Score,Risk,Complexity,FixNeeded,Lines,Functions,Classes,Todos,Category\n";
+        const rows = CURRENT_DATA.map(f => {
+            const name = (f.Name || '').replace(/"/g, '""');
+            const path = (f.Path || '').replace(/"/g, '""');
+            const layer = (f.Layer || f.Type || '').replace(/"/g, '""');
+            const risk = (f.Risk || '').replace(/"/g, '""');
+            const complexity = (f.Complexity || '').replace(/"/g, '""');
+            const fixTitle = (f.FixTitle || '').replace(/"/g, '""');
+            const category = (f.Category || 'N/A').replace(/"/g, '""');
+            
+            return `"${name}","${path}","${layer}",${f.Score || 0},"${risk}","${complexity}","${fixTitle}",${f.Lines || 0},${f.Functions || 0},${f.Classes || 0},${f.Todos || 0},"${category}"`;
+        }).join("\n");
+        const b = new Blob([head + rows], {type: "text/csv;charset=utf-8"});
+        saveAs(b, fn+'.csv');
+    }
+    else if(type === 'md') {
+        let md = `# TITAN REPORT\n| File | Score | Risk | Complexity | Issues |\n|---|---|---|---|---|\n`;
+        CURRENT_DATA.forEach(f => md += `| ${f.Name} | ${f.Score} | ${f.Risk} | ${f.Complexity} | ${f.FixTitle} |\n`);
+        const b = new Blob([md], {type: "text/markdown;charset=utf-8"});
+        saveAs(b, fn+'.md');
+    }
+    else if(type === 'xml') {
+        let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<titan-report>\n<files>\n';
+        CURRENT_DATA.forEach(f => {
+            xml += '  <file>\n';
+            Object.keys(f).forEach(key => {
+                if(f[key] !== null && f[key] !== undefined) {
+                    xml += `    <${key}>${f[key].toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</${key}>\n`;
+                }
+            });
+            xml += '  </file>\n';
+        });
+        xml += '</files>\n</titan-report>';
+        const b = new Blob([xml], {type: "application/xml;charset=utf-8"});
+        saveAs(b, fn+'.xml');
+    }
+    else if(type === 'excel') {
+        // Generate CSV that Excel can open
+        const csvContent = generateExcelCSV();
+        const excelBlob = new Blob([csvContent], {type: "text/csv;charset=utf-8"});
+        saveAs(excelBlob, fn+'.csv');
+    }
+}
+
+function generateExcelCSV() {
+    const headers = ['ID', 'Name', 'Path', 'Type', 'Category', 'Lines', 'Score', 'Complexity', 'Risk', 'Todos', 'Functions', 'Classes', 'Imports', 'Size', 'LastMod'];
+    let csv = headers.join(',') + '\n';
+    
+    CURRENT_DATA.forEach(f => {
+        const row = [
+            f.ID || '',
+            `"${(f.Name || '').replace(/"/g, '""')}"`,
+            `"${(f.Path || '').replace(/"/g, '""')}"`,
+            `"${(f.Type || f.Layer || '').replace(/"/g, '""')}"`,
+            `"${(f.Category || '').replace(/"/g, '""')}"`,
+            f.Lines || 0,
+            f.Score || 0,
+            `"${(f.Complexity || '').replace(/"/g, '""')}"`,
+            `"${(f.Risk || '').replace(/"/g, '""')}"`,
+            f.Todos || 0,
+            f.Functions || 0,
+            f.Classes || 0,
+            f.Imports || 0,
+            `"${(f.Size || '').replace(/"/g, '""')}"`,
+            `"${(f.LastMod || '').replace(/"/g, '""')}"`
+        ];
+        csv += row.join(',') + '\n';
+    });
+    
+    return csv;
+}
+
+window.generateAdvancedReport = function() {
+    // Create comprehensive report with all formats
+    const timestamp = new Date().toISOString().slice(0,19).replace(/:/g, '-');
+    const baseName = `TITAN_Advanced_${timestamp}`;
+    
+    // Generate all formats
+    exportData('json');
+    exportData('csv');
+    exportData('xml');
+    generatePDF();
+    
+    // Show notification
+    showNotification('Advanced report generation completed! Multiple formats exported.', 'success');
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        background: ${type === 'success' ? '#00ff9d' : (type === 'error' ? '#ff0055' : '#00f2fe')};
+        color: #000;
+        border-radius: 5px;
+        font-weight: bold;
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+window.generatePDF = function() {
+    const el = document.getElementById('captureArea');
+    const opt = { 
+        margin:0, 
+        filename:'TITAN_Full_Report.pdf', 
+        image:{type:'jpeg',quality:0.98}, 
+        html2canvas:{scale:2, useCORS:true, backgroundColor:'#05070a'}, 
+        jsPDF:{unit:'mm',format:'a4',orientation:'landscape'} 
+    };
+    html2pdf().set(opt).from(el).save();
+}
+
+function buildTree() { 
+    const tree = document.getElementById('treeView');
+    const dirs = [...new Set(CURRENT_DATA.map(f => f.Path || 'Root'))];
+    tree.innerHTML = dirs.map(d => `<div style="padding:3px;cursor:pointer">📂 ${d}</div>`).join('');
+}
+</script>
+</body>
+</html>
